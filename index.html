@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <title>Le super chat</title>
+</head>
+<body class="container">
+    <h1 class="text-center">Messagerie chat</h1>
+    <div class="mx-auto w-50">
+        <form action="" id="myForm" method="POST"  class="form-inline">
+            <div class="form-group"><input type="text" name="" id="mess" placeholder="Ecrivez un message" class="form-control"></div>
+            
+            <button type="submit" class="btn" >Envoyer</button> <span id="chang"></span>
+            <br><br>
+        </form>
+            <input type="text" name="" id="pseudo" placeholder="Modifier votre pseudo" class="form-control">
+            <button onclick="modifier()" class="btn">Modifier</button>
+    
+        <div id="discussion"></div>
+    </div>
+    <audio src="./0746.mp3"></audio>
+    
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var socket = io.connect('http://localhost:8081');
+    var pseudo=prompt('Quel est votre pseudo ?');
+    socket.emit('nouveau',pseudo);
+    socket.on('message',function(message){
+        console.log(message+" "+pseudo)
+    })
+    socket.on('join',exec);
+    function exec(message){
+        console.log('test')
+       insertFirst(message)
+       var dis = document.getElementById('discussion');
+       var first = dis.firstElementChild;
+       first.setAttribute('style','font-style:italic')
+    }
+    var form=document.querySelector('#myForm');
+    form.onsubmit=function(e){
+        e.preventDefault()
+        console.log(document.getElementById('mess').value)
+        socket.emit('message',document.getElementById('mess').value)
+        insertFirst(' '+document.getElementById('mess').value,'Moi :')
+        document.getElementById('mess').value=''
+        socket.emit('ecrit','vide')
+
+    }
+
+    var mess=document.getElementById('mess')
+    mess.onkeyup=function(e){
+        if(mess.value)
+            socket.emit('ecrit','est entrain d\'écrire...')
+        else
+        socket.emit('ecrit','vide') 
+    }
+    socket.on('newMessage',function(option){
+           insertFirst(' '+option.message,option.pseudo)
+           let aud=document.getElementsByTagName('audio')[0];
+           aud.play()
+       })
+    socket.on('ecrit',function(description){
+        document.getElementById('chang').innerHTML=description
+    })
+    function insertFirst(mess, des= 'aucun'){
+        var dis = document.getElementById('discussion');
+       var first = dis.firstElementChild;
+       var nouv = document.createElement('p');
+       if(des!='aucun'){
+           var id = document.createElement('span')
+           id.style.fontWeight='bold'
+           id.style.backgroundColor='black'
+           id.style.color='white'
+           id.appendChild(document.createTextNode(des))
+           nouv.appendChild(id)
+       }
+       nouv.appendChild(document.createTextNode(mess))
+        dis.insertBefore(nouv,first);
+    }
+    function modifier(){
+        if(document.getElementById('pseudo').value!=''){
+            socket.emit('pseudo',document.getElementById('pseudo').value)
+            var nouPseu=document.getElementById('pseudo').value
+            insertFirst(`Vous avez changé votre pseudo ${pseudo} pour ${nouPseu}`)
+            var dis = document.getElementById('discussion');
+            var first = dis.firstElementChild;
+            first.setAttribute('style','font-style:italic')
+        }
+    
+        
+        console.log(document.getElementById('pseudo').value)
+    }
+    let head1=document.getElementsByTagName('h1')[0];
+    head1.onclick=function(){
+        let aud=document.getElementsByTagName('audio')[0];
+           aud.play()
+    }
+</script>
+</body>
+</html>
